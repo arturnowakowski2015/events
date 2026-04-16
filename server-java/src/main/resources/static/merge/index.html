@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Porównanie / Merge — Participant Registry</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .field-key { width: 180px; }
+    .side { min-width: 220px; }
+    pre { background:#f8f9fa; padding:10px; }
+    .diff { background: #fff3cd; }
+    .participant-tag { font-size: .85rem; padding: .15rem .4rem; background:#e9ecef; border-radius:4px; margin-right:.25rem; }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <h3>Porównanie uczestników — podgląd MERGE (wielu źródeł)</h3>
+    <p class="text-muted">Interaktywny demo widok: wybierz target (rekord docelowy), wybierz które źródła chcesz scalić, dla każdego pola wskaż, którą wartość zachować, a następnie kliknij <strong>Merge</strong>.</p>
+
+    <div id="root"></div>
+
+    <hr />
+    <p class="text-muted small">Ten plik jest samodzielnym prototypem (React + Babel z CDN). Możesz go otworzyć bez instalacji (plik statyczny) lub serwować przez Spring Boot z katalogu <code>src/main/resources/static/merge</code>.</p>
+  </div>
+
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <script type="text/babel">
+  // Sample participants: fallback
+  const sampleParticipants = [
+    {
+      id: 'p-100',
+      personalId: 'ABC123456',
+      firstName: 'Jan',
+      lastName: 'Kowalski',
+      phone: '+48 600 700 800',
+      email: 'jan.k@example.com',
+      address: 'ul. Główna 1, 00-001 Miasto',
+      roles: [ { eventId: 'e-1', role: 'Victim' }, { eventId: 'e-2', role: 'Witness' } ],
+      events: [ 'e-1', 'e-2' ]
+    },
+    {
+      id: 'p-999',
+      personalId: 'ABC123456',
+      firstName: 'Janusz',
+      lastName: 'Kowalski',
+      phone: null,
+      email: 'j.kowalski@example.com',
+      address: 'ul. Główna 1, 00-001 Miasto',
+      roles: [ { eventId: 'e-3', role: 'Perpetrator' } ],
+      events: [ 'e-3' ]
+    },
+    {
+      id: 'p-500',
+      personalId: 'ABC123456',
+      firstName: 'Jan',
+      lastName: 'Kowalski',
+      phone: '+48 600 700 801',
+      email: null,
+      address: null,
+      roles: [ { eventId: 'e-4', role: 'Officer' } ],
+      events: [ 'e-4' ]
+    }
+  ];
+
+  const apiFetchParticipants = async (personalId) => {
+    try{
+      const url = personalId ? `/api/participants?personalId=${encodeURIComponent(personalId)}` : '/api/participants';
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('Network');
+      return await r.json();
+    }catch(e){
+      console.warn('Falling back to sample participants', e);
+      return sampleParticipants;
+    }
+  };
+
+  const apiPostMerge = async (targetId, payload) => {
+    try{
+      const r = await fetch(`/api/participants/${encodeURIComponent(targetId)}/merge`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      });
+      if(!r.ok) throw new Error('Merge failed');
+      return await r.json();
+    }catch(e){
+      console.warn('Merge fallback (local compute) due to', e);
+      return null;
+    }
+  };
+
+  // Fields we compare
+  const fields = ['personalId','firstName','lastName','phone','email','address'];
+
+  function FieldRowMulti({name, options, choice, onChoose}){
+    // options: [{id, label, value}]
+    const valuesMap = options.reduce((acc,o)=>{ acc[o.id]=o.value===null? '': o.value; return acc; }, {});
+    const differs = new Set(Object.values(valuesMap)).size > 1;
+    return (
+      <tr className={differs ? 'diff' : ''}>
+        <td className="field-key">{name}</td>
+        <td colSpan={3}>
+          <div className="d-flex gap-2 align-items-start flex-wrap">
+            {options.map(o => (
+              <label key={o.id} className="form-check form-check-inline mb-1">
+                <input className="form-check-input" type="radio" name={name} checked={choice===o.id} onChange={()=>onChoose(o.id)} />
+                <span className="ms-1 participant-tag">{o.label}</span>
+                <span className="ms-1">{String(o.value===null? '' : o.value)}</span>
+              </label>
+            ))}
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  function ComparisonAppMulti(){
+-    const [participants] = React.useState(sampleParticipants);
++    const [participants, setParticipants] = React.useState(sampleParticipants);
+     const [targetId, setTargetId] = React.useState(participants[0].id);
+     const [selectedSourceIds, setSelectedSourceIds] = React.useState(() => participants.slice(1).map(p=>p.id));
++
++    // load participants from backend on mount
++    React.useEffect(()=>{
++      (async ()=>{
++        const list = await apiFetchParticipants();
++        // normalize into expected shape if backend returns maps
++        if(Array.isArray(list) && list.length>0 && typeof list[0] === 'object' && list[0].id){
++          setParticipants(list.map(p=> ({
++            id: p.id,
++            firstName: p.firstName || '',
++            lastName: p.lastName || '',
++            personalId: p.personalId || '',
++            phone: p.phone || null,
++            email: p.email || null,
++            address: p.address || null,
++            roles: (p.roles || []).map(r=> ({ eventId: r.eventId || 'unknown', role: r.role || r.description || 'role' })),
++            events: (p.events || [])
++          })));
++        }
++      })();
++    }, []);
++
+     function toggleSource(id){
+      setSelectedSourceIds(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
+    }
+
+    function getParticipant(id){
+      return participants.find(p=>p.id===id);
+    }
+
+    // build current active list: target first, then selected sources in order of participants array
+    function activeList(){
+      const list = [];
+      const t = getParticipant(targetId);
+      if(t) list.push(t);
+      participants.forEach(p=>{ if(p.id!==targetId && selectedSourceIds.includes(p.id)) list.push(p); });
+      return list;
+    }
+
+    // initial choices: prefer target non-empty else first non-empty from sources
+    function computeInitialChoices(active){
+      const choice = {};
+      fields.forEach(f => {
+        const t = active[0] && active[0][f] ? active[0][f] : null;
+        if(t) { choice[f] = active[0].id; return; }
+        // else find first non-null in active (excluding target)
+        const found = active.slice(1).find(p => p[f]);
+        choice[f] = found ? found.id : (active[0] ? active[0].id : null);
+      });
+      return choice;
+    }
+
+    const [choices, setChoices] = React.useState(() => computeInitialChoices(activeList()));
+    const [selectedRoles, setSelectedRoles] = React.useState(() => {
+      const map = {};
+      participants.forEach(p=> p.roles.forEach(r=> map[`${p.id}:${r.eventId}:${r.role}`] = true));
+      return map;
+    });
+
+    // When active list changes, ensure choices refer to available participant ids
+    React.useEffect(()=>{
+      const active = activeList();
+      setChoices(prev => {
+        const keys = Object.keys(prev);
+        const availableIds = new Set(active.map(a=>a.id));
+        let changed = false;
+        const next = {};
+        keys.forEach(k => {
+          if(prev[k] && availableIds.has(prev[k])) next[k]=prev[k];
+          else { next[k] = computeInitialChoices(active)[k]; changed = true; }
+        });
+        return changed ? next : prev;
+      });
+    }, [targetId, selectedSourceIds.join(',')]);
+
+    function onChooseField(field, participantId){
+      setChoices(c => ({...c, [field]: participantId}));
+    }
+
+    function toggleRoleKey(key){ setSelectedRoles(m => ({...m, [key]: !m[key]})); }
+
+    function computeMerged(){
+      const active = activeList();
+      const merged = { id: targetId, mergedFrom: selectedSourceIds.slice(), sources: selectedSourceIds.slice() };
+      fields.forEach(f => {
+        const chosenPid = choices[f];
+        const p = getParticipant(chosenPid);
+        merged[f] = p ? p[f] : null;
+      });
+      // roles: collect selected role keys and map back to role objects
+      const mergedRoles = [];
+      Object.keys(selectedRoles).forEach(key => {
+        if(selectedRoles[key]){
+          // key format: participantId:eventId:role
+          const [pid, eventId, role] = key.split(':');
+          mergedRoles.push({ eventId, role, fromParticipant: pid });
+        }
+      });
+      // remove duplicates by eventId+role
+      const uniq = [];
+      mergedRoles.forEach(r=>{
+        if(!uniq.find(u=>u.eventId===r.eventId && u.role===r.role)) uniq.push(r);
+      });
+      merged.roles = uniq;
+      merged.events = Array.from(new Set(uniq.map(r=>r.eventId)));
+      return merged;
+    }
+
+    const [lastMerged, setLastMerged] = React.useState(null);
+    function doMerge(){
+      const mergedLocal = computeMerged();
+      // attempt backend merge
+      (async ()=>{
+        const fieldResolution = Object.fromEntries(fields.map(f=> [f, choices[f]]));
+        const payload = { sourceIds: selectedSourceIds, fieldResolution };
+        const remote = await apiPostMerge(targetId, payload);
+        if(remote) setLastMerged(remote);
+        else setLastMerged(mergedLocal);
+      })();
+    }
+
+    function resetAll(){
+      setTargetId(participants[0].id);
+      setSelectedSourceIds(participants.slice(1).map(p=>p.id));
+      setChoices(computeInitialChoices([participants[0], ...participants.slice(1)]));
+      const map = {};
+      participants.forEach(p=> p.roles.forEach(r=> map[`${p.id}:${r.eventId}:${r.role}`] = true));
+      setSelectedRoles(map);
+      setLastMerged(null);
+    }
+
+    // Compose options for field radios based on active list
+    const active = activeList();
+    const optionsByField = fields.reduce((acc,f)=>{
+      acc[f] = active.map(p=>({ id: p.id, label: `${p.id}${p.id===targetId? ' (target)':''}`, value: p[f] }));
+      return acc;
+    }, {});
+
+    return (
+      <div>
+        <div className="row mb-3">
+          <div className="col-md-8">
+            <div className="card mb-2"><div className="card-body">
+              <h6>Wybór rekordów</h6>
+              <div className="mb-2">
+                <div className="small text-muted">Wybierz target (rekord docelowy):</div>
+                {participants.map(p=> (
+                  <label className="form-check form-check-inline me-3" key={p.id}>
+                    <input className="form-check-input" type="radio" name="target" checked={targetId===p.id} onChange={()=>setTargetId(p.id)} />
+                    <span className="ms-1">{p.id} — {p.firstName} {p.lastName}</span>
+                  </label>
+                ))}
+              </div>
+              <div>
+                <div className="small text-muted">Wybierz źródła do scalenia (można wybrać wiele):</div>
+                {participants.filter(p=>p.id!==targetId).map(p=> (
+                  <label className="form-check form-check-inline me-3" key={p.id}>
+                    <input className="form-check-input" type="checkbox" checked={selectedSourceIds.includes(p.id)} onChange={()=>toggleSource(p.id)} />
+                    <span className="ms-1">{p.id} — {p.firstName} {p.lastName}</span>
+                  </label>
+                ))}
+              </div>
+            </div></div>
+
+            <table className="table table-sm table-bordered">
+              <thead className="table-light"><tr><th>Pole</th><th colSpan={3}></th></tr></thead>
+              <tbody>
+                {fields.map(f => (
+                  <FieldRowMulti key={f} name={f} options={optionsByField[f]} choice={choices[f]} onChoose={(pid)=>onChooseField(f,pid)} />
+                ))}
+              </tbody>
+            </table>
+
+            <div className="mb-3">
+              <h6>Role (wybierz które przenieść)</h6>
+              <div className="d-flex gap-3 flex-wrap">
+                {participants.flatMap(p=> p.roles.map(r=> ({ key:`${p.id}:${r.eventId}:${r.role}`, label:`${r.role} (event ${r.eventId}) — from ${p.id}` }))).map(item=> (
+                  <label className="form-check form-check-inline" key={item.key}>
+                    <input className="form-check-input" type="checkbox" checked={!!selectedRoles[item.key]} onChange={()=>toggleRoleKey(item.key)} />
+                    <span className="form-check-label ms-1">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <button className="btn btn-primary me-2" onClick={doMerge}>Merge</button>
+              <button className="btn btn-secondary" onClick={resetAll}>Reset</button>
+            </div>
+
+            {lastMerged && (
+              <div>
+                <h6>Wynik merge</h6>
+                <pre>{JSON.stringify(lastMerged, null, 2)}</pre>
+                <button className="btn btn-outline-primary btn-sm me-2" onClick={()=>{
+                  const blob = new Blob([JSON.stringify(lastMerged,null,2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='merged-participant.json'; a.click(); URL.revokeObjectURL(url);
+                }}>Pobierz JSON</button>
+                <button className="btn btn-outline-danger btn-sm" onClick={()=>{ setLastMerged(null); }}>Ukryj</button>
+              </div>
+            )}
+
+          </div>
+
+          <div className="col-md-4">
+            <div className="card mb-3"><div className="card-body">
+              <h6>Informacje</h6>
+              <p className="small text-muted">Target ID: <strong>{targetId}</strong></p>
+              <p className="small"><strong>Wybrane źródła:</strong><br/>{selectedSourceIds.join(', ') || '(brak)'}</p>
+              <p className="small text-muted">Active list (target + sources):</p>
+              <div>
+                {active.map(a=> (<div key={a.id} className="participant-tag">{a.id} — {a.firstName} {a.lastName}</div>))}
+              </div>
+            </div></div>
+
+            <div className="card"><div className="card-body">
+              <h6>Instrukcja</h6>
+              <ul>
+                <li>Wybierz rekord docelowy (target).</li>
+                <li>Zaznacz wszystkie rekordy-źródła, które chcesz scalić z targetem.</li>
+                <li>Dla każdego pola wybierz, z którego rekordu ma pochodzić wartość.</li>
+                <li>Wybierz role do przeniesienia.</li>
+                <li>Kliknij <strong>Merge</strong> aby wygenerować wynik (demo nie modyfikuje backendu).</li>
+              </ul>
+            </div></div>
+
+          </div>
+        </div>
+
+      </div>
+    );
+  }
+
+  ReactDOM.render(<ComparisonAppMulti/>, document.getElementById('root'));
+  </script>
+</body>
+</html>

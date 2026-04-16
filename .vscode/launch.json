@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Debuguj Vite w Chrome",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/frontend/src"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Debuguj CompareParticipants (Vite)",
+            "url": "http://localhost:5173/compare-participants",
+            "webRoot": "${workspaceFolder}/frontend/src"
+        }
+    ]
+}
