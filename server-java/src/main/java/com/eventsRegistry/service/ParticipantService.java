@@ -2,15 +2,18 @@ package com.eventsRegistry.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.eventsRegistry.dto.ParticipantDTO;
 import com.eventsRegistry.dto.RoleDTO;
 import com.eventsRegistry.dto.VehicleDTO;
+import com.eventsRegistry.entity.ParticipantEntity;
+import com.eventsRegistry.mapper.ParticipantEntityMapper;
+import com.eventsRegistry.repository.ParticipantRepository;
 import com.eventsRegistry.model.GenericRole;
 import com.eventsRegistry.model.Participant;
 import com.eventsRegistry.model.Perpetrator;
@@ -20,14 +23,20 @@ import com.eventsRegistry.model.Vehicle;
 
 @Service
 public class ParticipantService {
-    private final ConcurrentMap<String, Participant> store = new ConcurrentHashMap<>();
 
-    public ParticipantService() {}
+    private final ParticipantRepository participantRepository;
+    private final ParticipantEntityMapper participantEntityMapper;
 
+    public ParticipantService(ParticipantRepository participantRepository,
+                              ParticipantEntityMapper participantEntityMapper) {
+        this.participantRepository = participantRepository;
+        this.participantEntityMapper = participantEntityMapper;
+    }
+
+    // Keep existing toModel implementation (maps DTO -> model)
     public Participant toModel(ParticipantDTO dto) {
         if (dto == null) return null;
         Participant p = new Participant(dto.getFirstName(), dto.getLastName(), dto.getPersonalId());
-        // attach generated id to personalId? Models don't have id field; we'll keep mapping via store key
         VehicleDTO vdto = dto.getVehicle();
         if (vdto != null) {
             Vehicle v = new Vehicle(vdto.getMake(), vdto.getLicensePlate());
@@ -51,7 +60,6 @@ public class ParticipantService {
                     v.setDamageDescription(rd.getDescription());
                     role = v;
                 } else {
-                    // fallback: create a GenericRole to preserve unknown role data
                     GenericRole gr = new GenericRole();
                     gr.setRoleName(rd.getRoleName());
                     gr.setDescription(rd.getDescription());
@@ -65,19 +73,14 @@ public class ParticipantService {
         return p;
     }
 
+    // Keep existing toDTO implementation (maps model -> DTO)
     public ParticipantDTO toDTO(Participant p) {
         if (p == null) return null;
         ParticipantDTO dto = new ParticipantDTO();
         dto.setFirstName(p.getFirstName());
         dto.setLastName(p.getLastName());
         dto.setPersonalId(p.getPersonalId());
-        // find id in store by identity
-        for (var entry : store.entrySet()) {
-            if (entry.getValue() == p) {
-                dto.setId(entry.getKey());
-                break;
-            }
-        }
+        // id is retrieved from DB when possible; caller may set it
         if (p.getVehicle() != null) {
             Vehicle v = p.getVehicle();
             VehicleDTO vdto = new VehicleDTO();
@@ -101,34 +104,53 @@ public class ParticipantService {
         return dto;
     }
 
-    // Persist participant in-memory and return generated id
+    // Persist participant model by converting -> DTO -> Entity and saving. Return generated id (UUID string).
     public String save(Participant p) {
-        String id = UUID.randomUUID().toString();
-        store.put(id, p);
-        return id;
+        if (p == null) return null;
+        ParticipantDTO dto = toDTO(p);
+        com.eventsRegistry.entity.ParticipantEntity entity = participantEntityMapper.toEntity(dto);
+        if (entity.getId() == null || entity.getId().isBlank()) {
+            entity.setId(UUID.randomUUID().toString());
+        }
+        ParticipantEntity saved = participantRepository.save(entity);
+        return saved.getId();
     }
 
     public Participant save(String id, Participant participant) {
         if (id == null || id.isBlank() || participant == null) {
             return null;
         }
-        store.put(id, participant);
+        ParticipantDTO dto = toDTO(participant);
+        ParticipantEntity entity = participantEntityMapper.toEntity(dto);
+        entity.setId(id);
+        participantRepository.save(entity);
         return participant;
     }
 
     public Participant findById(String id) {
-        return store.get(id);
+        if (id == null || id.isBlank()) return null;
+        Optional<ParticipantEntity> oe = participantRepository.findById(id);
+        if (oe.isEmpty()) return null;
+        ParticipantDTO dto = participantEntityMapper.toDTO(oe.get());
+        Participant model = toModel(dto);
+        // set id on DTO -> model is not tracking id; if needed callers can find id via DB
+        return model;
     }
 
     public List<Participant> findAll() {
-        return new ArrayList<>(store.values());
+        List<ParticipantEntity> all = participantRepository.findAll();
+        return all.stream()
+                .map(e -> toModel(participantEntityMapper.toDTO(e)))
+                .collect(Collectors.toList());
     }
 
     public Participant deleteById(String id) {
-        if (id == null || id.isBlank()) {
-            return null;
-        }
-        return store.remove(id);
+        if (id == null || id.isBlank()) return null;
+        Optional<ParticipantEntity> oe = participantRepository.findById(id);
+        if (oe.isEmpty()) return null;
+        ParticipantDTO dto = participantEntityMapper.toDTO(oe.get());
+        Participant model = toModel(dto);
+        participantRepository.deleteById(id);
+        return model;
     }
-
 }
