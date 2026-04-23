@@ -26,7 +26,6 @@ public class ParticipantMergeController {
         List<String> sourceIds = (List<String>) body.getOrDefault("sourceIds", List.of());
         Map<String,String> fieldResolution = (Map<String,String>) body.getOrDefault("fieldResolution", Map.of());
         Map<String,Object> merged = service.merge(targetId, sourceIds, fieldResolution);
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"+merged);
-        return ResponseEntity.ok(merged);
+         return ResponseEntity.ok(merged);
     }
 }

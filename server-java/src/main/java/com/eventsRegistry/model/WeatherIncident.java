@@ -3,16 +3,18 @@ package com.eventsRegistry.model;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("WEATHER")
-public class WeatherIncident extends Incident<TelemetryData> {
+public class WeatherIncident<T extends TelemetryData> extends Incident<T> {
     private String conditionType; // e.g., SNOW, FOG
     private String intensity;
+    private T telemetry;
 
     public WeatherIncident() {
         super(EventType.WEATHER, null);
     }
 
-    public WeatherIncident(String location, String conditionType, String intensity) {
+    public WeatherIncident(T telemetry, String location, String conditionType, String intensity) {
         super(EventType.WEATHER, location);
+        this.telemetry=telemetry;
         this.conditionType = conditionType;
         this.intensity = intensity;
     }

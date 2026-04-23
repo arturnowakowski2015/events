@@ -4,17 +4,18 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("MAINTENANCE")
-public class MaintenanceIncident extends Incident<TelemetryData> {
+public class MaintenanceIncident<T extends TelemetryData> extends Incident<T> { 
     private LocalDateTime scheduleStart;
     private LocalDateTime scheduleEnd;
     private String contractor;
-
+    private T telemetry;
     public MaintenanceIncident() {
         super(EventType.MAINTENANCE, null);
     }
 
-    public MaintenanceIncident(String location, LocalDateTime scheduleStart, LocalDateTime scheduleEnd, String contractor) {
+    public MaintenanceIncident(T telemetry,String location, LocalDateTime scheduleStart, LocalDateTime scheduleEnd, String contractor) {
         super(EventType.MAINTENANCE, location);
+        this.telemetry=telemetry;
         this.scheduleStart = scheduleStart;
         this.scheduleEnd = scheduleEnd;
         this.contractor = contractor;

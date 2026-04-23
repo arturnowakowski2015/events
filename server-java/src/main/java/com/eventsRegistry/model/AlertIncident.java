@@ -3,7 +3,8 @@ package com.eventsRegistry.model;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("ALERT")
-public class AlertIncident extends Incident<TelemetryData> {
+public class AlertIncident<T extends TelemetryData> extends Incident<T>  {
+	private T telemetry;
     private String priority; // could be enum
     private String actionRequired;
 
@@ -11,8 +12,9 @@ public class AlertIncident extends Incident<TelemetryData> {
         super(EventType.ALERT, null);
     }
 
-    public AlertIncident(String location, String priority, String actionRequired) {
+    public AlertIncident(T telemetry, String location, String priority, String actionRequired) {
         super(EventType.ALERT, location);
+        this.telemetry=telemetry;
         this.priority = priority;
         this.actionRequired = actionRequired;
     }

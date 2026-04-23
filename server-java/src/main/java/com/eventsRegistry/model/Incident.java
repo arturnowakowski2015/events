@@ -65,20 +65,6 @@ public class Incident<T extends TelemetryData> {
     public void setDateTime(LocalDateTime dateTime) { this.dateTime = dateTime; }
     public void setLocationDescription(String locationDescription) { this.locationDescription = locationDescription; }
 
-    // Generic method to find participants by role
-    public <R extends IRole> List<Participant> getParticipantsByRole(Class<R> roleType) {
-        List<Participant> result = new ArrayList<>();
-        for (Participant p : participants) {
-            for (IRole r : p.getRoles()) {
-                if (roleType.isInstance(r)) {
-                    result.add(p);
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-
     // --- Added getters ---
     public String getIncidentId() { return incidentId; }
     public LocalDateTime getDateTime() { return dateTime; }

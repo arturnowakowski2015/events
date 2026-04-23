@@ -172,6 +172,39 @@ public class DemoApplication {
 	         }
 	     }
 	     System.out.println(sb.toString()); 
+	     
+	     
+	     
+	     
+	     
+	     
+	     
+//	     Sprawdzić i wymusić, że:
+//	    		•  targetId istnieje w DB.
+//	    		•  sourceIds wszystkie istnieją i nie zawierają targetId.
+//	    		•  każde chosenId w fieldResolution należy do zbioru { targetId } U sourceIds (walidacja referencji).
+//	    		•  Zwracać czytelny 400 Bad Request z opisem błędu przy niewłaściwym payloadzie.
+	    class Ana{
+ 
+	      static void perfana() {
+	    	  boolean tak=false;
+		      String stra = "adobecodebank";
+		      String strb = "abc";
+		      StringBuilder sb=new StringBuilder();
+		      int sec=0;
+		      Map<Integer, String> mapa=new HashMap<>();
+ 
+		   
+	      }
+	}
+	     
+	     
+	     
+	     
+	     
+	     
+	     
+	     
 	}
 
 }

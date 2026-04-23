@@ -3,7 +3,7 @@ package com.eventsRegistry.model;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Store {
+public class IncidentRegistry {
     private Map<String, Incident<? extends TelemetryData>> incidents = new ConcurrentHashMap<>();
 
     public Map<String, Incident<? extends TelemetryData>> getIncidents() {

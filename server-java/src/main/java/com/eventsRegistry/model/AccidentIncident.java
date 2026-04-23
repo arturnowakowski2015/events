@@ -3,10 +3,11 @@ package com.eventsRegistry.model;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("ACCIDENT")
-public class AccidentIncident extends Incident<VehicleTelemetry> {
+public class AccidentIncident<T extends TelemetryData> extends Incident<T>  {
     private int vehiclesInvolved;
     private int casualties;
     private Severity severity;
+    private T telemetry;
 
     public enum Severity { LOW, MEDIUM, HIGH }
 
@@ -15,8 +16,9 @@ public class AccidentIncident extends Incident<VehicleTelemetry> {
         super(EventType.ACCIDENT, null);
     }
 
-    public AccidentIncident(String location, int vehiclesInvolved, int casualties, Severity severity) {
+    public AccidentIncident(T telemetry, String location, int vehiclesInvolved, int casualties, Severity severity) {
         super(EventType.ACCIDENT, location);
+    	this.telemetry=telemetry;
         this.vehiclesInvolved = vehiclesInvolved;
         this.casualties = casualties;
         this.severity = severity != null ? severity : Severity.MEDIUM;

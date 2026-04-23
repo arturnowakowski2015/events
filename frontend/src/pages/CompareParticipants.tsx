@@ -23,10 +23,29 @@ type Participant = {
 // ---------------------------------------------------------------------------
 const fields = ['personalId', 'firstName', 'lastName', 'phone', 'email', 'address'] as const;
 type Field = typeof fields[number];
+ const t:Field="personalId";
 
-// ---------------------------------------------------------------------------
-// State — jeden obiekt zamiast 6 osobnych useState
-// ---------------------------------------------------------------------------
+const createFieldsWithO = <T extends (Field | "o")[]>(
+  ...args: T & 
+    // 2. Sprawdzamy, czy długość to oryginał + 1 (czyli 7)
+    (T["length"] extends 7 ? T : never) & 
+    // 3. Wymuszamy "o" na indeksie 3
+    { 3: "o" }
+    
+) => args;
+
+// ✅ Działa:
+// Indeksy: 0, 1, 2, [3], 4, 5, 6 (Razem 7 elementów)
+const f = createFieldsWithO(
+  "personalId", 
+  "firstName", 
+  "lastName", 
+  "o", 
+  "phone", 
+  "email", 
+  "address"
+);
+ 
 type State = {
     participants: Participant[];
     targetId: string;

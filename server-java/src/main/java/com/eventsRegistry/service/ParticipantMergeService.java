@@ -1,5 +1,7 @@
 package com.eventsRegistry.service;
 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import com.eventsRegistry.model.Participant;
 import com.eventsRegistry.model.GenericRole;
 import com.eventsRegistry.model.IRole;
@@ -48,62 +50,115 @@ public class ParticipantMergeService {
     public List<Map<String, Object>> findByLastNamePrefix(String prefix) {
          if(prefix==null || prefix.isEmpty())return this.listAllAsMap();
          	List<Map<String, Object>> list = new ArrayList<>();
-        // 3. Przejdź pętlą po 'store.entrySet()'
-        for(Map.Entry<String,Participant> e: store.entrySet())
+         for(Map.Entry<String,Participant> e: store.entrySet())
         {
         	Participant p = e.getValue();
         	if(p.getFirstName().startsWith(prefix))
-        		list.add(this.participantToMap(prefix, p));
+			list.add(this.participantToMap(e.getKey(), p));
         }
         return list; 
     }
     
     
+ 
+    
     public Map<String,Object> merge(String targetId, List<String> sourceIds, Map<String,String> fieldResolution) {
-        Participant target = store.get(targetId);
-        if(target == null) throw new IllegalArgumentException("Target not found: " + targetId);
+        // basic parameter checks
+        if (targetId == null || targetId.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "targetId is required");
+        }
 
-        // apply fieldResolution: map field -> chosenId
-        if(fieldResolution != null){
-            for(Map.Entry<String,String> fr: fieldResolution.entrySet()){
+        Participant target = store.get(targetId);
+        if (target == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Target not found: " + targetId);
+        }
+
+        // normalize sourceIds to non-null list
+        if (sourceIds == null) {
+            sourceIds = List.of();
+        }
+
+        // ensure targetId is NOT in sourceIds
+        if (sourceIds.contains(targetId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sourceIds must not contain targetId: " + targetId);
+        }
+
+        // ensure all sourceIds exist in the store
+        List<String> missingSources = sourceIds.stream()
+                .filter(sid -> !store.containsKey(sid))
+                .collect(Collectors.toList());
+        if (!missingSources.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Some sourceIds not found: " + missingSources);
+        }
+
+        // allowed ids for fieldResolution are { targetId } U sourceIds
+        Set<String> allowed = new HashSet<>(sourceIds);
+        allowed.add(targetId);
+
+        if (fieldResolution != null) {
+            for (Map.Entry<String, String> fr : fieldResolution.entrySet()) {
                 String field = fr.getKey();
                 String chosenId = fr.getValue();
-                Participant chosen = store.get(chosenId);
-                if(chosen == null) continue;
-                try{
-                    switch(field){
+                if (chosenId == null || !allowed.contains(chosenId)) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "fieldResolution contains unknown id for field '" + field + "': " + chosenId
+                    );
+                }
+            }
+        }
+
+        // apply fieldResolution: map field -> chosenId (now validated)
+        if (fieldResolution != null) {
+            for (Map.Entry<String, String> fr : fieldResolution.entrySet()) {
+                String field = fr.getKey();
+                String chosenId = fr.getValue();
+                Participant chosen = store.get(chosenId); // validated above, should exist
+                if (chosen == null) continue; // defensive, but normally won't happen
+                try {
+                    switch (field) {
                         case "firstName":
                             java.lang.reflect.Field fn = com.eventsRegistry.model.Person.class.getDeclaredField("firstName");
-                            fn.setAccessible(true); fn.set(target, chosen.getFirstName());
+                            fn.setAccessible(true);
+                            fn.set(target, chosen.getFirstName());
                             break;
                         case "lastName":
                             java.lang.reflect.Field ln = com.eventsRegistry.model.Person.class.getDeclaredField("lastName");
-                            ln.setAccessible(true); ln.set(target, chosen.getLastName());
+                            ln.setAccessible(true);
+                            ln.set(target, chosen.getLastName());
                             break;
                         case "personalId":
                             java.lang.reflect.Field pid = com.eventsRegistry.model.Person.class.getDeclaredField("personalId");
-                            pid.setAccessible(true); pid.set(target, chosen.getPersonalId());
+                            pid.setAccessible(true);
+                            pid.set(target, chosen.getPersonalId());
                             break;
                         default:
+                            // ignoruj nieznane pola (lub loguj)
                             break;
                     }
-                }catch(Exception ex){ /* ignore in demo */ }
+                } catch (Exception ex) {
+                    // w demo ignorujemy, ale w produkcji loguj/obsłuż wyjątek
+                }
             }
         }
 
         // merge roles from sources
-        for(String sid: sourceIds){
+        for (String sid : sourceIds) {
             Participant src = store.get(sid);
-            if(src == null) continue;
-            for(IRole r: src.getRoles()){
+            if (src == null) continue; // should not happen after validation
+            for (IRole r : src.getRoles()) {
                 target.addRole(r);
             }
-            // soft-remove source
+            // soft-remove source (w tym demo usuwamy z mapy)
             store.remove(sid);
         }
 
         return participantToMap(targetId, target);
     }
+
+    
+    
+    
 
     private Map<String,Object> participantToMap(String key, Participant p){
         Map<String,Object> m = new LinkedHashMap<>();
