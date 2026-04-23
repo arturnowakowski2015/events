@@ -9,8 +9,10 @@ public class RoleEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String roleName;
+    
+    @Column(name = "role_type", nullable = true) // Zmień na true
+    private String roleName = "Generic";  
+    
     @Column(length = 1000)
     private String description;
 

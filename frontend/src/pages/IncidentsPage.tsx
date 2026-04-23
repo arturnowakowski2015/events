@@ -1,5 +1,5 @@
-import { IncidentsCrudView } from '../features/crud/components/IncidentsCrudView';
+import { IncidentsView } from '../features/components/IncidentsView';
 
 export default function IncidentsPage() {
-    return <IncidentsCrudView />;
+    return <IncidentsView />;
 }

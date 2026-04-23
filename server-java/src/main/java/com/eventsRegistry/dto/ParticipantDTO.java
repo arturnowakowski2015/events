@@ -2,9 +2,10 @@ package com.eventsRegistry.dto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ParticipantDTO {
-    private String id;
+	private UUID id; 
     private String firstName;
     private String lastName;
     private String personalId;
@@ -13,8 +14,8 @@ public class ParticipantDTO {
 
     public ParticipantDTO() {}
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }

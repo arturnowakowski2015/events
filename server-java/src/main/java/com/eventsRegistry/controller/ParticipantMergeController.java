@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/participants")
+@RequestMapping("/api/participants-merge")
 public class ParticipantMergeController {
 
     @Autowired

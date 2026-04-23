@@ -6,7 +6,7 @@ import type {
     IncidentTelemetryDTO,
     ParticipantDTO,
     VehicleTelemetryDTO,
-} from '../../../api/types';
+} from '../../api/types';
 
 export type { CrashTelemetryDTO, EventType, IncidentDTO, IncidentPayload, IncidentTelemetryDTO, ParticipantDTO, VehicleTelemetryDTO };
 

@@ -1,4 +1,4 @@
-import type { ParticipantDTO, ParticipantPayload } from '../../../api/types';
+import type { ParticipantDTO, ParticipantPayload } from '../../api/types';
 
 export type ParticipantFormState = {
     firstName: string;

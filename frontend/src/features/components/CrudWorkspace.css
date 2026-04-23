@@ -302,6 +302,25 @@
     gap: 0.9rem;
 }
 
+.crud-menu {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--crud-line);
+    flex-wrap: wrap;
+}
+
+.crud-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.crud-menu-item input {
+    cursor: pointer;
+}
+
 @media (max-width: 980px) {
 
     .crud-panel,

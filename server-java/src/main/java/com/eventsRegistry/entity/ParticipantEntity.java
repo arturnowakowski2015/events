@@ -3,13 +3,14 @@ package com.eventsRegistry.entity;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "participants")
 public class ParticipantEntity {
     @Id
     @Column(length = 36)
-    private String id; // UUID string
+    private UUID id; // UUID string
 
     private String firstName;
     private String lastName;
@@ -26,8 +27,8 @@ public class ParticipantEntity {
     public ParticipantEntity() {}
 
     // getters / setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }

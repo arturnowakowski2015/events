@@ -4,11 +4,11 @@ import {
     fetchIncident,
     fetchIncidents,
     updateIncident,
-} from '../../../api/incidents';
-import type { IncidentDTO, IncidentPayload } from '../../../api/types';
-import { createCrudHooks } from './createCrudHooks';
+} from '../../api/incidents';
+import type { IncidentDTO, IncidentPayload } from '../../api/types';
+import { createHooks } from './createHooks';
 
-const incidentsCrud = createCrudHooks<IncidentDTO, IncidentPayload, string>({
+const incidentsHooks = createHooks<IncidentDTO, IncidentPayload, string>({
     resource: 'incidents',
     getId: (incident) => incident.incidentId,
     fetchAll: fetchIncidents,
@@ -44,14 +44,14 @@ const incidentsCrud = createCrudHooks<IncidentDTO, IncidentPayload, string>({
     },
 });
 
-export const incidentKeys = incidentsCrud.keys;
+export const incidentKeys = incidentsHooks.keys;
 
-export const useIncidentsQuery = incidentsCrud.useListQuery;
+export const useIncidentsQuery = incidentsHooks.useListQuery;
 
-export const useIncidentQuery = incidentsCrud.useDetailQuery;
+export const useIncidentQuery = incidentsHooks.useDetailQuery;
 
-export const useCreateIncidentMutation = incidentsCrud.useCreateMutation;
+export const useCreateIncidentMutation = incidentsHooks.useCreateMutation;
 
-export const useUpdateIncidentMutation = incidentsCrud.useUpdateMutation;
+export const useUpdateIncidentMutation = incidentsHooks.useUpdateMutation;
 
-export const useDeleteIncidentMutation = incidentsCrud.useDeleteMutation;
+export const useDeleteIncidentMutation = incidentsHooks.useDeleteMutation;

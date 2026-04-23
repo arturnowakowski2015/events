@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type CrudPanelProps = {
+type ApiPanelProps = {
     title: string;
     description: string;
     badge: string;
@@ -8,7 +8,7 @@ type CrudPanelProps = {
     children: ReactNode;
 };
 
-export function CrudPanel({ title, description, badge, wide = false, children }: CrudPanelProps) {
+export function ApiPanel({ title, description, badge, wide = false, children }: ApiPanelProps) {
     return (
         <section className={wide ? 'crud-panel crud-panel--wide' : 'crud-panel'}>
             <div className="crud-panel__header">

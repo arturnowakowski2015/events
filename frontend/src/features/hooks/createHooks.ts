@@ -5,7 +5,7 @@ type OptimisticConfig<TEntity, TPayload, TId extends string> = {
     update?: (id: TId, payload: TPayload, current: TEntity | undefined) => TEntity | undefined;
 };
 
-type CrudConfig<TEntity, TPayload, TId extends string> = {
+type HooksConfig<TEntity, TPayload, TId extends string> = {
     resource: string;
     getId: (entity: TEntity) => TId;
     fetchAll: () => Promise<TEntity[]>;
@@ -26,7 +26,7 @@ function makeTempId<TId extends string>(resource: string): TId {
     return `${resource}-optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}` as TId;
 }
 
-export function createCrudHooks<TEntity, TPayload, TId extends string>(config: CrudConfig<TEntity, TPayload, TId>) {
+export function createHooks<TEntity, TPayload, TId extends string>(config: HooksConfig<TEntity, TPayload, TId>) {
     const keys = {
         all: [config.resource] as const,
         detail: (id: TId) => [config.resource, id] as const,

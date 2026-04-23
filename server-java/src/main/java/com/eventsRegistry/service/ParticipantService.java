@@ -105,19 +105,19 @@ public class ParticipantService {
     }
 
     // Persist participant model by converting -> DTO -> Entity and saving. Return generated id (UUID string).
-    public String save(Participant p) {
+    public UUID save(Participant p) {
         if (p == null) return null;
         ParticipantDTO dto = toDTO(p);
         com.eventsRegistry.entity.ParticipantEntity entity = participantEntityMapper.toEntity(dto);
-        if (entity.getId() == null || entity.getId().isBlank()) {
-            entity.setId(UUID.randomUUID().toString());
+        if (entity.getId() == null  ) {
+            entity.setId(UUID.randomUUID());
         }
         ParticipantEntity saved = participantRepository.save(entity);
         return saved.getId();
     }
 
-    public Participant save(String id, Participant participant) {
-        if (id == null || id.isBlank() || participant == null) {
+    public Participant save(UUID id, Participant participant) {
+        if (id == null  || participant == null) {
             return null;
         }
         ParticipantDTO dto = toDTO(participant);
@@ -127,8 +127,8 @@ public class ParticipantService {
         return participant;
     }
 
-    public Participant findById(String id) {
-        if (id == null || id.isBlank()) return null;
+    public Participant findById(UUID id) {
+        if (id == null  ) return null;
         Optional<ParticipantEntity> oe = participantRepository.findById(id);
         if (oe.isEmpty()) return null;
         ParticipantDTO dto = participantEntityMapper.toDTO(oe.get());

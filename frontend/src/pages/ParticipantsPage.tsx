@@ -1,5 +1,5 @@
-import { ParticipantsCrudView } from '../features/crud/components/ParticipantsCrudView';
+import { ParticipantsView } from '../features/components/ParticipantsView';
 
 export default function ParticipantsPage() {
-    return <ParticipantsCrudView />;
+    return <ParticipantsView />;
 }

@@ -2,6 +2,7 @@ package com.eventsRegistry.controller;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class ParticipantController {
     @PostMapping
     public ResponseEntity<ParticipantDTO> create(@RequestBody ParticipantDTO dto) {
         var model = participantService.toModel(dto);
-        String id = participantService.save(model);
+        UUID id = participantService.save(model);
         var savedDto = participantService.toDTO(model);
         if (savedDto.getId() == null) savedDto.setId(id);
         URI location = URI.create("/api/participants/" + id);
@@ -43,17 +44,9 @@ public class ParticipantController {
         return ResponseEntity.ok(dtos);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ParticipantDTO> get(@PathVariable String id) {
-        var participant = participantService.findById(id);
-        if (participant == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(participantService.toDTO(participant));
-    }
-
+ 
     @PutMapping("/{id}")
-    public ResponseEntity<ParticipantDTO> update(@PathVariable String id, @RequestBody ParticipantDTO dto) {
+    public ResponseEntity<ParticipantDTO> update(@PathVariable UUID id, @RequestBody ParticipantDTO dto) {
         if (participantService.findById(id) == null) {
             return ResponseEntity.notFound().build();
         }

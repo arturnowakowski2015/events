@@ -4,11 +4,11 @@ import {
     fetchParticipant,
     fetchParticipants,
     updateParticipant,
-} from '../../../api/participants';
-import type { ParticipantDTO, ParticipantPayload } from '../../../api/types';
-import { createCrudHooks } from './createCrudHooks';
+} from '../../api/participants';
+import type { ParticipantDTO, ParticipantPayload } from '../../api/types';
+import { createHooks } from './createHooks';
 
-const participantsCrud = createCrudHooks<ParticipantDTO, ParticipantPayload, string>({
+const participantsHooks = createHooks<ParticipantDTO, ParticipantPayload, string>({
     resource: 'participants',
     getId: (participant) => participant.id,
     fetchAll: fetchParticipants,
@@ -44,14 +44,14 @@ const participantsCrud = createCrudHooks<ParticipantDTO, ParticipantPayload, str
     },
 });
 
-export const participantKeys = participantsCrud.keys;
+export const participantKeys = participantsHooks.keys;
 
-export const useParticipantsQuery = participantsCrud.useListQuery;
+export const useParticipantsQuery = participantsHooks.useListQuery;
 
-export const useParticipantQuery = participantsCrud.useDetailQuery;
+export const useParticipantQuery = participantsHooks.useDetailQuery;
 
-export const useCreateParticipantMutation = participantsCrud.useCreateMutation;
+export const useCreateParticipantMutation = participantsHooks.useCreateMutation;
 
-export const useUpdateParticipantMutation = participantsCrud.useUpdateMutation;
+export const useUpdateParticipantMutation = participantsHooks.useUpdateMutation;
 
-export const useDeleteParticipantMutation = participantsCrud.useDeleteMutation;
+export const useDeleteParticipantMutation = participantsHooks.useDeleteMutation;

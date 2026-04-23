@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 	    public ParticipantEntity dtoToEntity(ParticipantDTO dto) {
 	        if (dto == null) return null;
 	        ParticipantEntity e = new ParticipantEntity();
-	        e.setId(dto.getId() != null ? dto.getId() : UUID.randomUUID().toString());
+	        e.setId(dto.getId() != null ? dto.getId() : UUID.randomUUID());
 	        e.setFirstName(dto.getFirstName());
 	        e.setLastName(dto.getLastName());
 	        e.setPersonalId(dto.getPersonalId());

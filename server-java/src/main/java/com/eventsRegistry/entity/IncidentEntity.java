@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -12,14 +13,14 @@ import java.util.Set;
 @Table(name = "incidents")
 public class IncidentEntity {
     @Id
-    private String id; // UUID string
+    @Column(name = "id", nullable = false, columnDefinition = "uuid default gen_random_uuid()")
+    private UUID id;
 
     private Instant dateTime;
     @Column(length = 1000)
     private String locationDescription;
 
-    // Simple flattened telemetry fields (łatwiejsze do rozpoczęcia):
-    private Double speedAtImpact;
+     private Double speedAtImpact;
     private Double gForce;
     private Double latitude;
     private Double longitude;
@@ -38,8 +39,8 @@ public class IncidentEntity {
     private Set<ParticipantEntity> participants = new HashSet<>();
 
     // getters/setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public Instant getDateTime() { return dateTime; }
     public void setDateTime(Instant dateTime) { this.dateTime = dateTime; }
     public String getLocationDescription() { return locationDescription; }
