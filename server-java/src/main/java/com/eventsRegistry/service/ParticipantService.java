@@ -108,12 +108,27 @@ public class ParticipantService {
         return id;
     }
 
+    public Participant save(String id, Participant participant) {
+        if (id == null || id.isBlank() || participant == null) {
+            return null;
+        }
+        store.put(id, participant);
+        return participant;
+    }
+
     public Participant findById(String id) {
         return store.get(id);
     }
 
     public List<Participant> findAll() {
         return new ArrayList<>(store.values());
+    }
+
+    public Participant deleteById(String id) {
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        return store.remove(id);
     }
 
 }

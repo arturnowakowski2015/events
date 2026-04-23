@@ -1,12 +1,15 @@
 package com.eventsRegistry.controller;
 
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,7 +31,8 @@ public class IncidentController {
         var model = incidentService.toModel(dto);
         incidentService.save(model);
         var out = incidentService.toDTO(model);
-        return ResponseEntity.ok(out);
+        URI location = URI.create("/api/incidents/" + model.getIncidentId());
+        return ResponseEntity.created(location).body(out);
     }
 
     @GetMapping
@@ -43,5 +47,24 @@ public class IncidentController {
         var inc = incidentService.findById(id);
         if (inc == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(incidentService.toDTO(inc));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<IncidentDTO> update(@PathVariable String id, @RequestBody IncidentDTO dto) {
+        if (incidentService.findById(id) == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var model = incidentService.toModel(dto);
+        incidentService.save(id, model);
+        return ResponseEntity.ok(incidentService.toDTO(model));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        if (!incidentService.deleteById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
     }
 }

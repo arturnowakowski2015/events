@@ -13,6 +13,7 @@ import com.eventsRegistry.dto.ParticipantDTO;
 import com.eventsRegistry.dto.TelemetryDataDTO;
 import com.eventsRegistry.dto.VehicleTelemetryDTO;
 import com.eventsRegistry.model.CrashTelemetry;
+import com.eventsRegistry.model.IRole;
 import com.eventsRegistry.model.Incident;
 import com.eventsRegistry.model.Participant;
 import com.eventsRegistry.model.TelemetryData;
@@ -20,11 +21,12 @@ import com.eventsRegistry.model.VehicleTelemetry;
 
 @Service
 public class IncidentService {
-    private final ConcurrentMap<String, Incident<TelemetryData>> store = new ConcurrentHashMap<>();
     private final ParticipantService participantService;
+    private final IncidentRegistryService incidentRegistryService;
 
-    public IncidentService(ParticipantService participantService) {
+    public IncidentService(ParticipantService participantService, IncidentRegistryService incidentRegistryService) {
         this.participantService = participantService;
+        this.incidentRegistryService = incidentRegistryService;
     }
 
     public Incident<TelemetryData> toModel(IncidentDTO dto) {
@@ -64,7 +66,7 @@ public class IncidentService {
         return inc;
     }
 
-    public IncidentDTO toDTO(Incident<TelemetryData> inc) {
+    public IncidentDTO toDTO(Incident<?> inc) {
         if (inc == null) return null;
         IncidentDTO dto = new IncidentDTO();
         dto.setIncidentId(inc.getIncidentId());
@@ -116,14 +118,63 @@ public class IncidentService {
     }
 
     public void save(Incident<TelemetryData> inc) {
-        store.put(inc.getIncidentId(), inc);
+        incidentRegistryService.register(inc.getIncidentId(), inc);
+    }
+
+    public Incident<TelemetryData> save(String id, Incident<TelemetryData> incident) {
+        if (id == null || id.isBlank() || incident == null) {
+            return null;
+        }
+        incident.setIncidentId(id);
+        incidentRegistryService.register(id, incident);
+        return incident;
     }
 
     public Incident<TelemetryData> findById(String id) {
-        return store.get(id);
+        Incident<? extends TelemetryData> inc = incidentRegistryService.findById(id);
+        if (inc == null) {
+            return null;
+        }
+        @SuppressWarnings("unchecked")
+        Incident<TelemetryData> typed = (Incident<TelemetryData>) inc;
+        return typed;
+    }
+ 
+    public <T extends Incident<?>> T findById(String id, Class<T> targetClass) {
+        return incidentRegistryService.findById(id, targetClass);
+    }
+    
+    
+    public List<Incident<?>> findAll() {
+        return incidentRegistryService.findAll();
     }
 
-    public List<Incident<TelemetryData>> findAll() {
-        return new ArrayList<>(store.values());
+    public <T extends Incident<?>> List<T> getByCategory(Class<T> clazz)
+    {
+    	return incidentRegistryService.findAllOfType(clazz);
+    }
+
+    public boolean deleteById(String id) {
+        if (id == null || id.isBlank()) {
+            return false;
+        }
+        return incidentRegistryService.removeById(id) != null;
+    }
+
+    // Business query previously hosted in Incident model.
+    public <R extends IRole> List<Participant> getParticipantsByRole(Incident<?> incident, Class<R> roleType) {
+        List<Participant> result = new ArrayList<>();
+        if (incident == null || roleType == null) {
+            return result;
+        }
+        for (Participant p : incident.getParticipants()) {
+            for (IRole r : p.getRoles()) {
+                if (roleType.isInstance(r)) {
+                    result.add(p);
+                    break;
+                }
+            }
+        }
+        return result;
     }
 }

@@ -1,31 +1,60 @@
 import axios from 'axios';
-import type { ParticipantDTO } from './types';
+import type { ParticipantDTO, ParticipantPayload } from './types';
 
 const BASE = 'http://localhost:8080/api/participants';
 
+function toError(error: unknown): Error {
+    if (axios.isAxiosError(error)) {
+        const message = typeof error.response?.data === 'string'
+            ? error.response.data
+            : error.message;
+        return new Error(message || 'Participant request failed');
+    }
+
+    return error instanceof Error ? error : new Error('Participant request failed');
+}
+
 export const fetchParticipants = async (): Promise<ParticipantDTO[]> => {
     try {
-        const { data, status } = await axios.get<ParticipantDTO[]>(BASE);
-        if (status === 200) {
-            console.info('REST 200 OK: participants loaded successfully.');
-        }
+        const { data } = await axios.get<ParticipantDTO[]>(BASE);
         return Array.isArray(data) ? data : [];
     } catch (error) {
-        console.error('Error fetching participants:', error);
-        return [];
+        throw toError(error);
     }
 };
 
-export const createParticipant = async (dto: Omit<ParticipantDTO, 'id'>): Promise<ParticipantDTO> => {
+export const fetchParticipant = async (id: string): Promise<ParticipantDTO> => {
     try {
-        const { data, status } = await axios.post<ParticipantDTO>(BASE, dto);
-        if (status === 201) {
-            console.info('REST 201 Created: participant created successfully.');
-        }
+        const { data } = await axios.get<ParticipantDTO>(`${BASE}/${encodeURIComponent(id)}`);
         return data;
     } catch (error) {
-        console.error('Error creating participant:', error);
-        throw error;
+        throw toError(error);
+    }
+};
+
+export const createParticipant = async (dto: ParticipantPayload): Promise<ParticipantDTO> => {
+    try {
+        const { data } = await axios.post<ParticipantDTO>(BASE, dto);
+        return data;
+    } catch (error) {
+        throw toError(error);
+    }
+};
+
+export const updateParticipant = async (id: string, dto: ParticipantPayload): Promise<ParticipantDTO> => {
+    try {
+        const { data } = await axios.put<ParticipantDTO>(`${BASE}/${encodeURIComponent(id)}`, dto);
+        return data;
+    } catch (error) {
+        throw toError(error);
+    }
+};
+
+export const deleteParticipant = async (id: string): Promise<void> => {
+    try {
+        await axios.delete(`${BASE}/${encodeURIComponent(id)}`);
+    } catch (error) {
+        throw toError(error);
     }
 };
 

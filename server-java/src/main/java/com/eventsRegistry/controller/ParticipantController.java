@@ -1,19 +1,20 @@
 package com.eventsRegistry.controller;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.eventsRegistry.dto.ParticipantDTO;
-import com.eventsRegistry.model.Participant;
 import com.eventsRegistry.service.ParticipantService;
 
 @RestController
@@ -27,20 +28,50 @@ public class ParticipantController {
 
     @PostMapping
     public ResponseEntity<ParticipantDTO> create(@RequestBody ParticipantDTO dto) {
-        // convert to model and persist
         var model = participantService.toModel(dto);
         String id = participantService.save(model);
         var savedDto = participantService.toDTO(model);
-        // set id explicitly in DTO in case mapping didn't find it
         if (savedDto.getId() == null) savedDto.setId(id);
         URI location = URI.create("/api/participants/" + id);
         return ResponseEntity.created(location).body(savedDto);
     }
 
-//    @GetMapping
-//    public ResponseEntity<List<ParticipantDTO>> list() {
-//        var all = participantService.findAll();
-//        var dtos = all.stream().map(participantService::toDTO).collect(Collectors.toList());
-//        return ResponseEntity.ok(dtos);
-//    }
+    @GetMapping
+    public ResponseEntity<List<ParticipantDTO>> list() {
+        var all = participantService.findAll();
+        var dtos = all.stream().map(participantService::toDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ParticipantDTO> get(@PathVariable String id) {
+        var participant = participantService.findById(id);
+        if (participant == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(participantService.toDTO(participant));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ParticipantDTO> update(@PathVariable String id, @RequestBody ParticipantDTO dto) {
+        if (participantService.findById(id) == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var model = participantService.toModel(dto);
+        participantService.save(id, model);
+
+        var updatedDto = participantService.toDTO(model);
+        if (updatedDto.getId() == null) updatedDto.setId(id);
+        return ResponseEntity.ok(updatedDto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        var deleted = participantService.deleteById(id);
+        if (deleted == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
 }

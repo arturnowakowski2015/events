@@ -6,10 +6,6 @@ import CompareParticipants from "./pages/CompareParticipants_beforeReducer";
 import FleetDashboardMockup from "./pages/FleetDashboardMockup";
 
 function App() {
-  const m = new Set();
-  m.add("a");
-  const k = m.has("a");
-  console.log(k);
   return (
     <>
       <Navbar />

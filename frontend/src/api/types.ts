@@ -1,12 +1,14 @@
 export interface RoleDTO {
     roleName: string;
+    description?: string;
 }
 
 export interface VehicleDTO {
-    vehicleId: string;
     make: string;
     model: string;
     licensePlate: string;
+    vin?: string;
+    insurancePolicyNumber?: string;
 }
 
 export interface ParticipantDTO {
@@ -18,16 +20,40 @@ export interface ParticipantDTO {
     roles: RoleDTO[];
 }
 
+export type ParticipantPayload = Omit<ParticipantDTO, 'id'>;
+
+export type EventType = 'GENERIC' | 'ACCIDENT' | 'MAINTENANCE' | 'TRAFFIC' | 'WEATHER' | 'ALERT' | 'INFO';
+
 export interface TelemetryDataDTO {
-    speed: number;
-    acceleration: number;
-    timestamp: string;
+    speedAtImpact: number;
+    gForce: number;
+    latitude: number;
+    longitude: number;
+    preciseTime: string;
 }
+
+export interface CrashTelemetryDTO extends TelemetryDataDTO {
+    type: 'CRASH';
+    incidentId?: string;
+    severity: number;
+    notes: string;
+}
+
+export interface VehicleTelemetryDTO extends TelemetryDataDTO {
+    type: 'VEHICLE';
+    vehicleId: string;
+    engineRpm: number;
+}
+
+export type IncidentTelemetryDTO = TelemetryDataDTO | CrashTelemetryDTO | VehicleTelemetryDTO;
 
 export interface IncidentDTO {
     incidentId: string;
     dateTime: string;
     locationDescription: string;
+    eventType: EventType;
     participants: ParticipantDTO[];
-    telemetry: TelemetryDataDTO | null;
+    telemetry: IncidentTelemetryDTO | null;
 }
+
+export type IncidentPayload = Omit<IncidentDTO, 'incidentId'>;
