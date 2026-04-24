@@ -1,6 +1,24 @@
 # CarMonitoring
 
-Monorepo aplikacji CarMonitoring z frontendem w React oraz dwoma backendami (Node.js i Java Spring Boot).
+CarMonitoring monorepo with a React frontend and two backend implementations (Node.js and Java Spring Boot).
+
+## What This Application Is For
+
+CarMonitoring is used to register road accidents with participant roles such as victim, witness, and perpetrator. It is designed to support case handling workflows for police officers and lawyers.
+
+## Screenshots
+
+### Create Incident
+
+![Create Incident](createincident.png)
+
+### Get Incidents
+
+![Get Incidents](get%20incidents.png)
+
+### Update Incident
+
+![Update Incident](updateincident.png)
 
 ## Project Structure
 
