@@ -137,7 +137,7 @@ public class ParticipantService {
         return model;
     }
 
-    public List<Participant> findAll() {
+    public List<Participant> findAll() { 
         List<ParticipantEntity> all = participantRepository.findAll();
         return all.stream()
                 .map(e -> toModel(participantEntityMapper.toDTO(e)))

@@ -101,72 +101,72 @@ app.listen(PORT, () => {
         };
     }
 
-type Developer1 = { id: number; name: string };
-type SafeExtractIds<T extends readonly { id: number }[]> = T[number]["id"];
-type IntersectionIds<T extends readonly { id: number }[], S extends readonly { id: number }[]> = 
-    SafeExtractIds<T> & SafeExtractIds<S>;
+    type Developer1 = { id: number; name: string };
+    type SafeExtractIds<T extends readonly { id: number }[]> = T[number]["id"];
+    type IntersectionIds<T extends readonly { id: number }[], S extends readonly { id: number }[]> =
+        SafeExtractIds<T> & SafeExtractIds<S>;
 
-// Przykład:
-const tablica1 = [{ id: 1, name: 'A' }, { id: 2, name: 'B' }] as const;
-const tablica2 = [
-    { id: 2, name: 'B' }, 
-    { id: 3, name: 'C' },  
-] as const;
+    // Przykład:
+    const tablica1 = [{ id: 1, name: 'A' }, { id: 2, name: 'B' }] as const;
+    const tablica2 = [
+        { id: 2, name: 'B' },
+        { id: 3, name: 'C' },
+    ] as const;
 
-type WspolneID = IntersectionIds<typeof tablica1, typeof tablica2>;
-type WSP<T extends readonly { id: number }[], S extends readonly { id: number }[]> = T[number]["id"] & S[number]["id"];
- const y: WSP<typeof tablica1, typeof tablica2> = 2; // Poprawne, bo 2 jest wspólnym ID
-const pracownicy = [
-    { id: 1, imie: 'Jan' },
-    { id: 2, imie: 'Anna' },
-    { id: 3, imie: 'Piotr' }
-] as { id: number | null; imie: string | null }[];
+    // type WspolneID = IntersectionIds<typeof tablica1, typeof tablica2>;
+    // type WSP<T extends readonly { id: number }[], S extends readonly { id: number }[]> = T[number]["id"] & S[number]["id"];
+    //  const y: WSP<typeof tablica1, typeof tablica2> = 2; // Poprawne, bo 2 jest wspólnym ID
+    // const pracownicy = [
+    //     { id: 1, imie: 'Jan' },
+    //     { id: 2, imie: 'Anna' },
+    //     { id: 3, imie: 'Piotr' }
+    // ] as { id: number | null; imie: string | null }[];
 
-const samochody = [
-    { id_auta: 2, model: 'Toyota' },
-    { id_auta: 3, model: 'Ford' },
-    { id_auta: 4, model: "BMW" }
-] as { id_auta: number | null; model: string | null }[];
+    // const samochody = [
+    //     { id_auta: 2, model: 'Toyota' },
+    //     { id_auta: 3, model: 'Ford' },
+    //     { id_auta: 4, model: "BMW" }
+    // ] as { id_auta: number | null; model: string | null }[];
 
-// Model nie jest w tablicy Col, więc v.model będzie typu never
-const v: FJ<typeof pracownicy, typeof samochody, ['id', 'imie', 'id_auta'], 1> = {
-    id: 0,
-    imie: 'Jan',
-    id_auta: null,
-    model: undefined as never // model został wykluczony przez brak w Col
-};
+    // // Model nie jest w tablicy Col, więc v.model będzie typu never
+    // const v: FJ<typeof pracownicy, typeof samochody, ['id', 'imie', 'id_auta'], 1> = {
+    //     id: 0,
+    //     imie: 'Jan',
+    //     id_auta: null,
+    //     model: undefined as never // model został wykluczony przez brak w Col
+    // };
 
-    function fj<A extends Record<string, any>, B extends Record<string, any>>(
-        arrayA: A[],
-        arrayB: B[],
-        keyA: keyof A,
-        keyB: keyof B
-    ) {
-        // 1. Wyciągamy wszystkie unikalne klucze z obu tablic do Setów
-        const keysInA = new Set(arrayA.map(item => item[keyA]));
-        console.log('Keys in A:', keysInA);
-        const keysInB = new Set(arrayB.map(item => item[keyB]));
-        console.log('Keys in B:', keysInB);
-        // 2. Filtrujemy tablicę A: zostawiamy tylko te elementy, których klucza NIE MA w B
-        const onlyInA = arrayA.filter((item: any) => !keysInB.has(item[keyA]));
+    //     function fj<A extends Record<string, any>, B extends Record<string, any>>(
+    //         arrayA: A[],
+    //         arrayB: B[],
+    //         keyA: keyof A,
+    //         keyB: keyof B
+    //     ) {
+    //         // 1. Wyciągamy wszystkie unikalne klucze z obu tablic do Setów
+    //         const keysInA = new Set(arrayA.map(item => item[keyA]));
+    //         console.log('Keys in A:', keysInA);
+    //         const keysInB = new Set(arrayB.map(item => item[keyB]));
+    //         console.log('Keys in B:', keysInB);
+    //         // 2. Filtrujemy tablicę A: zostawiamy tylko te elementy, których klucza NIE MA w B
+    //         const onlyInA = arrayA.filter((item: any) => !keysInB.has(item[keyA]));
 
-        // 3. Filtrujemy tablicę B: zostawiamy tylko te elementy, których klucza NIE MA w A
-        const onlyInB = arrayB.filter((item: any) => !keysInA.has(item[keyB]));
+    //         // 3. Filtrujemy tablicę B: zostawiamy tylko te elementy, których klucza NIE MA w A
+    //         const onlyInB = arrayB.filter((item: any) => !keysInA.has(item[keyB]));
 
-        // Map onlyInA to add keyB: null
-        const arra = onlyInA.map((t) => ({ ...t, [keyB]: null }));
-        // Map onlyInB to add keyA: null
-        const arrb = onlyInB.map((t) => ({ ...t, [keyA]: null }));
-        // 4. Zwracamy jedną tablicę (odpowiednik kolumn A i B z wartościami NULL w SQL)
-        return [...arra, ...arrb] as Array<FJ<A[], B[]>>;
-    }
-    const wynik = fullAntiJoin(pracownicy, samochody, 'id', 'id_auta');
-    const wynik1 = fj(pracownicy, samochody, 'id', 'id_auta')
-
-
+    //         // Map onlyInA to add keyB: null
+    //         const arra = onlyInA.map((t) => ({ ...t, [keyB]: null }));
+    //         // Map onlyInB to add keyA: null
+    //         const arrb = onlyInB.map((t) => ({ ...t, [keyA]: null }));
+    //         // 4. Zwracamy jedną tablicę (odpowiednik kolumn A i B z wartościami NULL w SQL)
+    //         return [...arra, ...arrb] as Array<FJ<A[], B[]>>;
+    //     }
+    //     const wynik = fullAntiJoin(pracownicy, samochody, 'id', 'id_auta');
+    //     const wynik1 = fj(pracownicy, samochody, 'id', 'id_auta')
 
 
-    console.log(wynik1);
+
+
+    // console.log(wynik1);
 
     const developers = [
         {
@@ -269,11 +269,21 @@ const v: FJ<typeof pracownicy, typeof samochody, ['id', 'imie', 'id_auta'], 1> =
     mr(developers, 'level')
 
 
+    const createMember = ({ email, address = {} }: { email: string; address?: Record<string, any> }) => {
+        const validEmail = /.+\@.+\..+/.test(email);
+        if (!validEmail) throw new Error("Valid email pls");
+        return {
+            email,
+            address: address ? address : null
+        };
+    };
+
+    const member = createMember({ email: "my@email.com" })
+    console.log(member)
 
 
 
-
-    console.log(`Server running on http://localhost:${PORT}`);
+    // console.log(`Server running on http://localhost:${3000}`);
 
 });
 
